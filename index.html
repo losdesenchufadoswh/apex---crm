@@ -1083,6 +1083,7 @@
           <input type="text" id="searchInput" placeholder="Buscar por nombre, tel, pueblo..." />
         </div>
         <button class="btn-primary" onclick="openModal()">+ Nuevo Cliente</button>
+        <button id="hurricaneToggle" class="btn-primary" style="background: rgba(239, 68, 68, 0.2); border: 1px solid var(--status-rojo); color: var(--text);" onclick="toggleHurricaneCall()">🌀 Mostrando: ACTIVOS</button>
       </div>
 
       <div class="toolbar" style="gap:6px;">
@@ -1513,6 +1514,7 @@ let currentRole = null;
 let clients = {};
 let editingClient = null;
 let activeFilter = 'all';
+let showHurricaneCall = false; // Toggle between Activos and Hurricane Call
 let searchTerm = '';
 let notifyEnabled = false;
 let alertEnabled = true;
@@ -1754,8 +1756,15 @@ function clientsArray() {
 function renderClients() {
   const grid = document.getElementById('clientsGrid');
   let arr = clientsArray();
-  // filter by status
-  if (activeFilter !== 'all') arr = arr.filter(c => c.status === activeFilter);
+  
+  // Hurricane Call filter
+  if (showHurricaneCall) {
+    arr = arr.filter(c => c.hurricane_call === true);
+  } else {
+    // filter by status (only when NOT in Hurricane Call mode)
+    if (activeFilter !== 'all') arr = arr.filter(c => c.status === activeFilter);
+  }
+  
   // search
   if (searchTerm) {
     arr = arr.filter(c =>
@@ -1790,6 +1799,33 @@ function renderClients() {
       openModal(card.dataset.id);
     });
   });
+}
+
+function toggleHurricaneCall() {
+  showHurricaneCall = !showHurricaneCall;
+  const btn = document.getElementById('hurricaneToggle');
+  if (showHurricaneCall) {
+    btn.textContent = '🌀 Mostrando: HURRICANE CALL';
+    btn.style.background = 'rgba(239, 68, 68, 0.3)';
+    btn.style.borderColor = 'var(--status-rojo)';
+    btn.style.color = 'var(--status-rojo)';
+  } else {
+    btn.textContent = '🌀 Mostrando: ACTIVOS';
+    btn.style.background = 'rgba(239, 68, 68, 0.2)';
+    btn.style.borderColor = 'var(--text-dim)';
+    btn.style.color = 'var(--text)';
+  }
+  renderClients();
+}
+
+function toggleClientHurricane(clientId, event) {
+  event.stopPropagation();
+  const client = clients[clientId];
+  if (!client) return;
+  client.hurricane_call = !client.hurricane_call;
+  persistClients();
+  renderClients();
+  toast(client.hurricane_call ? '🌀 Movido a Hurricane Call' : '✓ Vuelto a Activos', 'success');
 }
 
 function clientCardHTML(c) {
@@ -1906,6 +1942,11 @@ function clientCardHTML(c) {
           ${c.owner ? `<span style="background:var(--bg-elev); border:1px solid var(--border); color:var(--text-dim); padding:2px 7px; border-radius:4px; font-size:10px; font-weight:600; font-family:'JetBrains Mono', monospace;">👤 ${escapeHtml(c.owner)}</span>` : ''}
         </span>
         <span class="meta-amount">${c.amount ? '$' + Number(c.amount).toLocaleString() : ''}</span>
+      </div>
+      <div style="display:flex; gap:6px; margin-top:8px;">
+        <button class="qa-btn" onclick="toggleClientHurricane('${c.id}', event)" style="flex:1; padding:6px 12px; border-radius:6px; border:1px solid ${c.hurricane_call ? 'var(--status-rojo)' : 'var(--border)'}; background:${c.hurricane_call ? 'rgba(239, 68, 68, 0.15)' : 'rgba(255,255,255,0.05)'}; color:${c.hurricane_call ? 'var(--status-rojo)' : 'var(--text)'}; font-weight:600; font-size:12px; cursor:pointer; transition:all 0.2s;">
+          ${c.hurricane_call ? '🌀 HURRICANE CALL' : '✓ ACTIVO'}
+        </button>
       </div>
     </div>
   `;
@@ -2787,6 +2828,7 @@ function saveClient() {
     noContestLog,
     callLog,
     owner,
+    hurricane_call: existing.hurricane_call || false,
     updatedAt: new Date().toISOString(),
     createdAt: existing.createdAt || new Date().toISOString(),
     notified: autoNextCall !== existing.nextCall ? false : (existing.notified || false)
