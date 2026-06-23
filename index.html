@@ -1172,9 +1172,10 @@
       
       <!-- Period selector -->
       <div class="toolbar" style="gap:6px; margin-bottom:16px;">
-        <span class="filter-chip metric-period active" data-period="all">All-Time</span>
+        <span class="filter-chip metric-period active" data-period="today">Hoy</span>
         <span class="filter-chip metric-period" data-period="week">Esta Semana</span>
         <span class="filter-chip metric-period" data-period="month">Este Mes</span>
+        <span class="filter-chip metric-period" data-period="all">All-Time</span>
       </div>
       
       <div id="metricsView"></div>
@@ -1519,7 +1520,7 @@ let searchTerm = '';
 let notifyEnabled = false;
 let alertEnabled = true;
 let taskPeriod = 'all';
-let metricPeriod = 'all';
+let metricPeriod = 'today';
 let taskDateFrom = null;
 let taskDateTo = null;
 let mapSearchTerm = '';
@@ -1911,7 +1912,7 @@ function clientCardHTML(c) {
     <div class="client-card ${dueClass}" data-id="${c.id}" data-status="${status}">
       <div class="card-head">
         <div>
-          <div class="client-name">${escapeHtml(c.name || 'Sin nombre')} ${ncBadge}${mapIndicator}</div>
+          <div class="client-name">${escapeHtml(c.name || 'Sin nombre')} ${ncBadge}</div>
           <div class="client-pueblo">${escapeHtml(c.pueblo || '—')}</div>
           ${addressHtml}
         </div>
@@ -2250,8 +2251,12 @@ function renderMetrics() {
   // Calculate period range for filtering activity
   let periodStart = null;
   let periodEnd = null;
-  const periodLabel = { 'all': 'All-Time', 'week': 'Esta Semana', 'month': 'Este Mes' }[metricPeriod];
-  if (metricPeriod === 'week') {
+  const periodLabel = { 'today': 'Hoy', 'all': 'All-Time', 'week': 'Esta Semana', 'month': 'Este Mes' }[metricPeriod];
+  if (metricPeriod === 'today') {
+    const t = new Date(now); t.setHours(0,0,0,0);
+    periodStart = t.getTime();
+    periodEnd = now.getTime();
+  } else if (metricPeriod === 'week') {
     const w = new Date(now); w.setDate(w.getDate() - 6); w.setHours(0,0,0,0);
     periodStart = w.getTime();
     periodEnd = now.getTime();
