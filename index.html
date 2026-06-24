@@ -2766,14 +2766,6 @@ function saveClient() {
   const nextCall = document.getElementById('fNextCall').value;
   let comments = document.getElementById('fComments').value.trim();
   
-  // Add timestamp to new comments
-  const existing = clients[id] || {};
-  if (comments && comments !== (existing.comments || '')) {
-    const now = new Date();
-    const dateStr = now.toLocaleDateString('es-PR') + ' ' + now.toLocaleTimeString('es-PR', { hour: '2-digit', minute: '2-digit' });
-    comments = `[${dateStr}]\n${comments}\n` + (existing.comments ? '\n---\n' + existing.comments : '');
-  }
-  
   const products = [...document.querySelectorAll('#fProducts .ms-option.selected')].map(o => o.dataset.prod);
   const statusEl = document.querySelector('#fStatus .status-opt.selected');
   const status = statusEl ? statusEl.dataset.color : 'amarillo';
@@ -2793,6 +2785,13 @@ function saveClient() {
   const id = editingClient || ('c_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8));
   const existing = clients[id] || {};
   const isNewClient = !editingClient;
+  
+  // Add timestamp to new comments
+  if (comments && comments !== (existing.comments || '')) {
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('es-PR') + ' ' + now.toLocaleTimeString('es-PR', { hour: '2-digit', minute: '2-digit' });
+    comments = `[${dateStr}]\n${comments}\n` + (existing.comments ? '\n---\n' + existing.comments : '');
+  }
 
   // Admin can override the owner
   const isAdmin = currentRole === 'admin';
